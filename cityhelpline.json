@@ -1,0 +1,248 @@
+{
+  "agent_id": "",
+  "channel": "voice",
+  "last_modification_timestamp": 1753706705703,
+  "agent_name": "cityhelpline",
+  "response_engine": {
+    "type": "retell-llm",
+    "llm_id": "llm_c4c3f2c15f967adc31e6a4f57271",
+    "version": 0
+  },
+  "language": "multi",
+  "opt_out_sensitive_data_storage": false,
+  "opt_in_signed_url": false,
+  "version": 0,
+  "is_published": false,
+  "post_call_analysis_model": "gpt-4o-mini",
+  "voice_id": "11labs-Monika",
+  "max_call_duration_ms": 3600000,
+  "interruption_sensitivity": 0.9,
+  "allow_user_dtmf": true,
+  "user_dtmf_options": {},
+  "retellLlmData": {
+    "llm_id": "llm_c4c3f2c15f967adc31e6a4f57271",
+    "version": 0,
+    "model": "gpt-4.1",
+    "general_prompt": "You are a helpful, polite, and professional voice assistant for the City Helpline. You assist callers by understanding their needs and either collecting relevant information or routing them to the appropriate department. You speak clearly, confirm user inputs, and keep interactions smooth and respectful.\n\nYour responsibilities:\n1. Greet the caller warmly and professionally.\n2. Identify the caller's intent based on what they say.\n3. Route them to the correct state/prompt using transitions:\n   - Lost or missing item → transition to `lost_and_found`\n   - Emergency help needed → transition to `emergency_assistance`\n   - Unclear or silent → transition to `fallback`\n\nGeneral rules:\n- Always ask for information in a step-by-step way.\n- Confirm each detail before moving to the next step.\n- Use polite closing statements when ending a call.\n- If unsure, ask the caller to repeat or rephrase.\n\nDo not solve tasks yourself unless you're in the appropriate state. Use `transition` commands to move to task-specific prompts. If a task is complete or cannot be handled, use `call function end_call()` to end the call politely.\n\nSpeak like a trained city helpline operator—professional but approachable.\n",
+    "general_tools": [
+      {
+        "name": "end_call",
+        "type": "end_call",
+        "description": "end call "
+      }
+    ],
+    "states": [
+      {
+        "name": "Intro",
+        "state_prompt": "You are the City Helpline Intro Agent. Your job is to greet the caller, understand what they need help with, and smoothly transition them to the appropriate department or agent. \n\n🎯 Your Goal: \nIdentify the user's intent based on what they say — do **not** attempt to solve their issue yourself. You only listen, understand, and route.\n\n🗣️ Tone:\n- Professional and helpful\n- Calm and friendly\n- Speak clearly and patiently\n\n📍 Script:\n\nStart with: \n“Hello! You’ve reached the City Helpline. I’m here to assist you. Could you please tell me what you need help with today?”\n\n🎯 Intent Matching & Transitions:\nAfter the user responds, identify their intent and immediately transition to the correct next state:\n\n- If the caller mentions a **lost, missing, or forgotten item**, such as a bag, wallet, phone, or keys →  transition to  `lost_and_found`\n\n- If the caller reports a **critical situation**, like a fire, accident, injury, or personal safety concern →  \n  **Transition to** `medical_emergency`\n  \n- If the caller reports a **stay situation** , like a hotel ,staycation, home stay  ** Transition to ** `hotel_booking`.\n\n\n🧠 Do not assume. Only transition when you're confident in the intent. If unsure, politely ask the caller to clarify.\n\n## if you are not confident in the intent ask Caller again in polite tone \n\n❌ Do NOT collect detailed information like name, item, or location here. That will be handled by the specific department after transition.\n\n✅ Examples of how to interpret user responses:\n\n- “I lost my phone on the metro” → `lost_and_found`\n- “There’s a gas leak in my apartment” → `emergency_assistance`\n- “The streetlight near my house is broken” → `repair_services`\n- “Can I talk to someone about a bill?” → `human_support`\n- “Uhh... I don’t know” or silence → `fallback`\n\nWhen you're done identifying the intent, end your turn and **transition** immediately.\n",
+        "edges": [
+          {
+            "description": "If the caller mentions a **lost, missing, or forgotten item**, such as a bag, wallet, phone, or keys",
+            "speak_during_transition": false,
+            "destination_state_name": "lost_and_found"
+          },
+          {
+            "description": "The condition that triggers the transition to the next state. e.g., \"If the user has provided the name\"",
+            "speak_during_transition": false,
+            "destination_state_name": "medical_emergency"
+          },
+          {
+            "description": "if a caller mentions nearby places to stay , hotels , homestay or accomadation ",
+            "speak_during_transition": false,
+            "destination_state_name": "hotel_booking"
+          }
+        ],
+        "tools": []
+      },
+      {
+        "name": "lost_and_found",
+        "state_prompt": "You are the Lost & Found Agent for the City Helpline. Your job is to assist callers who have lost a personal item or are trying to locate someone. Speak clearly, remain composed, and collect all relevant details step-by-step. \n\n## workflow ##  \n- First gather the complete information, \n- confirm information  with the user\n- After confirmation, check the \"lost_and_found\" knowledge base\n- Tell the caller any related helpline/info found\n- Finally, call the custom function `lost_found_webhook`. \n\n🗣️ Style:\n- Calm, empathetic, and professional\n- Speak slowly and clearly\n- Avoid interruptions or overlapping steps\n\n---\n\n### 🟩 Step 1: Ask for Item Details\nSay:\n> “I’m sorry to hear that. Can you describe the item or person that’s lost?  \nAlso, where and when was it last seen?”\n\n→ Store in memory:\n- `item_or_person`\n- `description`\n- `last_seen_location`\n- `last_seen_time`\n\n---\n\n### 🟩 Step 2: Ask for Full Name\nSay:\n> “May I have your full name, please?”\n\n→ Store in memory:\n- `name`\n\n---\n\n### 🟩 Step 3: Ask for Contact Number\nSay:\n> “What’s the best phone number to reach you at?”\n\n→ Store in memory:\n- `phone`\n\n\n### 🟩 Step 5: Confirm Details with Caller\nSay:\n> “Let me confirm what you’ve shared:  \nYou’ve reported a lost {{item_or_person}}, described as '{{description}}',  \nlast seen at {{last_seen_location}} around {{last_seen_time}}.  \nYour name is {{name}}, and your phone number is {{phone}}.  \nIs that all correct?”\n\n→ Wait for confirmation (user says yes or okay)\n\n### Step 6: Check Knowledge Base\n  Search in the lost_and_found knowledge base using the collected info or keywords (like item_or_person, description, etc.)\n  If any related helpline, location, or recovery instructions are found, share them.  \n  Say: “Here’s some additional info that may help:\n  {{output from knowledge base}}”\n\n→ Then continue.\n---\n\n### 🟩 Step 7: Submit Report & Say Next Steps\nSay:\n> “Thank you. I’ve now logged your report.  \n  If we find a match, we’ll reach out to you.”\n\n---\n\n### 🟦 Step 8: After confirmation call function lost_found_webhook:\n\n```json\ncall function lost_found_webhook with body:\n{\n  \"item_or_person\": \"{{item_or_person}}\",\n  \"description\": \"{{description}}\",\n  \"last_seen_location\": \"{{last_seen_location}}\",\n  \"last_seen_time\": \"{{last_seen_time}}\",\n  \"name\": \"{{name}}\",\n  \"phone\": \"{{phone}}\",\n}\n",
+        "edges": [],
+        "tools": [
+          {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "parameter_type": "json",
+            "method": "POST",
+            "query_params": {},
+            "description": "lost and found webhook call",
+            "type": "custom",
+            "url": "https://n8n.servigo.shop/webhook/lost-found",
+            "args_at_root": false,
+            "timeout_ms": 120000,
+            "speak_after_execution": true,
+            "name": "lost_found_webhook",
+            "response_variables": {},
+            "speak_during_execution": true,
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Caller’s name."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Detailed description of the lost item or person (e.g., color, size, unique marks)."
+                },
+                "last_seen_location": {
+                  "type": "string",
+                  "description": "Where the item or person was last seen."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Caller’s contact number."
+                },
+                "last_seen_time": {
+                  "type": "string",
+                  "description": "When the item or person was last seen."
+                },
+                "item_or_person": {
+                  "type": "string",
+                  "description": "What item or person has been lost (e.g., wallet, ID card, child)."
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "medical_emergency",
+        "state_prompt": "You are the Emergency Assistance Agent for the City Helpline.\nYour job is to calmly and clearly understand the caller’s emergency, detect how serious it is, and guide them accordingly using our knowledge base and support services.\t\n\n### Your Main Goals\n- Ask what the emergency is.\n\n- Understand the situation clearly.\n\n- Detect whether it’s a normal or serious condition.\n\n- Retrieve related information from the knowledge base.\n\n- Call the emergency_call_webhook function with structured data.\n\n- Speak empathetically throughout the process.\n\n\n### Emergency Type Detection:\n - Use the caller's description to classify the emergency:\n  # Normal: \n\tIf the issue involves any of the following (or similar):\n\tFever, vomiting, loose motion, mild dehydration, cold/cough, body pain\n\t→ Consider this Normal\n\n\t→ Provide the nearest suitable hospital using the knowledge base\n\t→ Speak calmly, provide guidance, and continue to webhook\n\n  # Serious:\n\tIf the issue includes: Road accident, physical assault, choking, heart attack, fire, seizure, \t\tunconsciousness, or any situation with risk to life\n\t→ Consider this Serious\n\t→ Respond empathetically, stay calm but urgent\n\t→ Provide nearest hospital + emergency helpline using the knowledge base\n\t→ Then, continue to webhook\n\n### Style Guidelines:\n    - Be calm, caring, and professional\n    - Use empathetic language, especially in serious cases\n    - Do not sound robotic — show concern\n    - Never interrupt. Let the caller explain fully before responding.\n\n\n### Conversation flow \nStep 1: Ask the Emergency\n Say: “I’m here to help. Can you please tell me what the emergency is?”\n   → Store in memory:\n     emergency_description\n\nStep 2: Detect Severity (Internally)\n\tInternally detect if:\n\tseverity = \"normal\" → based on keywords like fever, vomit, loose motion\n\tseverity = \"serious\" → based on keywords like accident, attack, injury, fire, risk to life\nStep 3: Respond Based on Severity\n\tIf severity = \"normal\":\n\tSay: “Got it. Thank you for explaining.\n\tThis sounds like a health issue we can assist with right away.”\n\t→ Use knowledge base to retrieve:\n\thospital_name, hospital_address, contact_number\n\tIf severity = \"serious\":\n\tSay: “I understand. This sounds very serious.\n\tPlease remain calm. I’m retrieving emergency services and the nearest hospital for you.”\n\t→ Use knowledge base to retrieve:\n\thospital_name, hospital_address, contact_number\n\temergency_helpline\n\tSay:\n\t“Please call {{emergency_helpline}}\n\t immediately if you haven’t already.\n\tYou can also go to {{hospital_name}}, located at {{hospital_address}}.\n\tTheir number is {{contact_number}}.”\n\nStep 4: Ask for Caller Details\n\tNow say:\n\t“Can I have your name and contact number, please?”\n\t→ Store in memory:\n\tcaller_name\n\tcaller_phone\nStep 5: Call Custom Function\n\tcall function emergency_call_webhook with body: {\n  \t\"emergency_description\": \"{{emergency_description}}\",\n  \t\"severity\": \"{{severity}}\",\n  \t\"hospital_name\": \"{{hospital_name}}\",\n  \t\"hospital_address\": \"{{hospital_address}}\",\n  \t\"contact_number\": \"{{contact_number}}\",\n  \t\"emergency_helpline\": \"{{emergency_helpline}}\",\n  \t\"caller_name\": \"{{caller_name}}\",\n  \t\"caller_phone\": \"{{caller_phone}}\"\n\t}\nStep 6: End Call\n\tSay:“I’ve shared the best available help nearby and also logged this with our emergency team.\n\tPlease take care and don’t hesitate to reach out again if needed. Help is on the way.”\n\n\n\n\n\n",
+        "edges": [],
+        "tools": [
+          {
+            "type": "end_call",
+            "name": "end_call_9"
+          },
+          {
+            "headers": {},
+            "parameter_type": "json",
+            "method": "POST",
+            "query_params": {},
+            "description": "emergency call webhook",
+            "type": "custom",
+            "url": "https://n8n.servigo.shop/webhook/lost-found",
+            "args_at_root": false,
+            "timeout_ms": 120000,
+            "speak_after_execution": true,
+            "name": "emergency_call_webhook",
+            "response_variables": {},
+            "speak_during_execution": false,
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "type": "string",
+                  "description": "The detected severity level of the emergency.",
+                  "enum": [
+                    "normal",
+                    "serious"
+                  ]
+                },
+                "caller_name": {
+                  "type": "string",
+                  "description": "Name of the caller reporting the emergency."
+                },
+                "caller_phone": {
+                  "type": "string",
+                  "description": "Phone number of the caller."
+                },
+                "emergency_helpline": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Emergency helpline number or info (only for serious cases). Null for normal."
+                },
+                "hospital_address": {
+                  "type": "string",
+                  "description": "Address of the hospital retrieved from the knowledge base."
+                },
+                "contact_number": {
+                  "type": "string",
+                  "description": "Contact number of the hospital."
+                },
+                "emergency_description": {
+                  "type": "string",
+                  "description": "Description of the emergency situation provided by the caller."
+                },
+                "hospital_name": {
+                  "type": "string",
+                  "description": "Name of the hospital retrieved from the knowledge base."
+                }
+              },
+              "required": [
+                "emergency_description",
+                "severity",
+                "hospital_name",
+                "hospital_address",
+                "contact_number",
+                "caller_name",
+                "caller_phone"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "hotel_booking",
+        "state_prompt": "You are the City Helpline’s Hotel Information Agent.  \nYour job is to assist callers who are looking for nearby hotel information in Ujjain.  \nYou will collect the caller’s name, phone number, and current location, then provide them with nearby hotel details from the knowledge base named hotel_booking.\n\n🎯 Your Goal:\n- Understand the user's location\n- Fetch nearby hotel info from the knowledge base\n- Share hotel name, address, landmark, and phone to caller\n- finally call custom function 'hotel_booking_webhook'\n\n🗣 Tone:\n- Friendly and helpful\n- Speak clearly and calmly\n- Keep the conversation short and to the point\n\n📞 Script:\n\n1. Start by greeting and collecting user info:\n\n\"Hi! I understand you're looking for a hotel in Ujjain.  \nI can help you with that. May I know your name?\"\n\n<Wait for user response>\n\n2. Ask for phone number:\n\n\"Thank you! Could you please share your phone number?\"\n\n<Wait for user response>\n\n3. Ask for current location or nearby landmark:\n\n\"Great. What is your current location or a nearby landmark in Ujjain?  \nThis helps me find the closest hotels for you.\"\n\n<Wait for user response>\n\n4. Respond with hotel details from the knowledge base:\n\"Here’s a nearby hotel I found for you:  \n🏨 Hotel Name: {{hotel_name}}  \n📍 Address: {{address}}  \n📌 Landmark: {{landmark}}  \n📞 Phone: {{phone}}   \nLet us know if you need help with anything else!\"\n\n5. After the response, call custom function 'hotel_booking_webhook' with the following \n{\n  \"user_name\": \"{{user_name}}\",\n  \"user_phone\": \"{{user_phone}}\",\n  \"give_information_for_hotels\": \"Hotel: {{hotel_name}}, Address: {{address}}, Landmark: {{landmark}}, Phone: {{phone}}\",\n  \"hotel_live_location\": \"{{google_maps_link}}\"\n}",
+        "edges": [],
+        "tools": [
+          {
+            "headers": {},
+            "parameter_type": "json",
+            "method": "POST",
+            "query_params": {},
+            "description": "hotel booking webhook ",
+            "type": "custom",
+            "url": "https://n8n.servigo.shop/webhook-test/lost-found",
+            "args_at_root": false,
+            "timeout_ms": 120000,
+            "speak_after_execution": true,
+            "name": "hotel_booking_webhook",
+            "response_variables": {},
+            "speak_during_execution": false,
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "give_information_for_hotels": {
+                  "type": "string",
+                  "description": "A formatted string with hotel name, address, landmark, and phone number."
+                },
+                "user_phone": {
+                  "type": "string",
+                  "description": "The phone number of the user."
+                },
+                "hotel_live_location": {
+                  "type": "string",
+                  "description": "Google Maps link to the hotel's live location."
+                },
+                "user_name": {
+                  "type": "string",
+                  "description": "The name of the user requesting hotel information."
+                }
+              },
+              "required": [
+                "user_name",
+                "user_phone",
+                "give_information_for_hotels",
+                "hotel_live_location"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "starting_state": "Intro",
+    "start_speaker": "agent",
+    "begin_message": "Namaste! City Helpline mein aapka swagat hai. Main Monika bol rahi hoon. Kripya batayein, main aapki kis tarah se madad kar sakti hoon?",
+    "knowledge_base_ids": [],
+    "last_modification_timestamp": 1754462300804,
+    "is_published": false
+  },
+  "conversationFlow": null,
+  "llmURL": null
+}
