@@ -5,6 +5,9 @@ An AI-powered voice automation agent for a **City Helpline Toll-Free Service**, 
 This intelligent voice agent helps citizens across India with multilingual support for various emergency and informational needs.
 
 ---
+![Retail AI](Retail%20ai.jpeg)
+
+![Retail Flow](Retailflow.jpeg)
 
 ## 📞 Use Cases
 
